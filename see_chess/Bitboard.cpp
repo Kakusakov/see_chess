@@ -1,13 +1,125 @@
 #include "Bitboard.hpp"
+#include <cassert>
+#include <bit>
 
-// TODO: paste the array values...
-const Bitboard Bitboard::pawn_attack[2][64] = {};
-const Bitboard Bitboard::knight_attack[64] = {};
-const Bitboard Bitboard::king_attack[64] = {};
+constexpr RankType to_underlying_type(Rank rank) {
+	return static_cast<RankType>(rank);
+}
+constexpr FileType to_underlying_type(File file) {
+	return static_cast<FileType>(file);
+}
+constexpr SquareType to_underlying_type(Square square) {
+	return static_cast<SquareType>(square);
+}
 
-const Bitboard Bitboard::diagonal_mask_ex[64] = {};
-const Bitboard Bitboard::antidiagonal_mask_ex[64] = {};
-const Bitboard Bitboard::rank_mask_ex[64] = {};
+constexpr Rank to_rank(Square square) {
+	return static_cast<Rank>(to_underlying_type(square) / 8);
+}
+constexpr File to_file(Square square) {
+	return static_cast<File>(to_underlying_type(square) & 7);
+}
+constexpr Rank to_square(Rank rank, File file) {
+	return static_cast<Rank>(to_underlying_type(rank) * 8 + to_underlying_type(file));
+}
 
-const Bitboard Bitboard::fill_up_attacks[8][64] = {};
-const Bitboard Bitboard::a_file_attacks[8][64] = {};
+constexpr Bitboard Bitboard::empty() {
+	return Bitboard(0);
+}
+constexpr Bitboard Bitboard::filled() {
+	return Bitboard(UINT64_MAX);
+}
+constexpr Bitboard Bitboard::from_rank(Rank rank) {
+	return Bitboard((uint64_t)0xFF << (to_underlying_type(rank) * 8));
+}
+constexpr Bitboard Bitboard::from_file(File file) {
+	return Bitboard((uint64_t)0x0101010101010101 << to_underlying_type(file));
+}
+constexpr Bitboard Bitboard::from_square(Square square) {
+	return Bitboard((uint64_t)1 << to_underlying_type(square));
+}
+constexpr Bitboard Bitboard::operator|(Bitboard other) const {
+	return Bitboard(value | other.value);
+}
+constexpr Bitboard Bitboard::operator&(Bitboard other) const {
+	return Bitboard(value & other.value);
+}
+constexpr Bitboard Bitboard::operator^(Bitboard other) const {
+	return Bitboard(value ^ other.value);
+}
+constexpr Bitboard Bitboard::operator>>(int shift) const {
+	assert(shift > 0 && shift < 64);
+	return Bitboard(value >> shift);
+}
+constexpr Bitboard Bitboard::operator<<(int shift) const {
+	assert(shift > 0 && shift < 64);
+	return Bitboard(value << shift);
+}
+constexpr bool Bitboard::operator==(Bitboard other) const {
+	return value == other.value;
+}
+constexpr bool Bitboard::is_empty() const {
+	return *this == Bitboard::empty();
+}
+constexpr bool Bitboard::is_filled() const {
+	return *this == Bitboard::filled();
+}
+constexpr bool Bitboard::has_square(Square square) const {
+	return !(*this & Bitboard::from_square(square)).is_empty();
+}
+constexpr int Bitboard::popcount() const {
+	return std::popcount(value);
+}
+constexpr Square Bitboard::bitscan() const {
+	assert(value);
+	return static_cast<Square>(std::countr_zero(value));
+}
+constexpr Bitboard Bitboard::reset_bit() const {
+	return Bitboard(value & (value - (uint64_t)1));
+}
+constexpr Bitboard Bitboard::north_fill() const {
+	return Bitboard(from_file(File::A).value * value);
+}
+
+//static inline Bitboard diagonal_attacks(Square from, Bitboard occupance) {
+//	const size_t sq = static_cast<size_t>(from);
+//	const Bitboard occ = (((diagonal_mask_ex[sq] & occupance) * b_file) >> 58).get_bits();
+//	return diagonal_mask_ex[sq] & fill_up_attacks[sq & 7][occ];
+//}
+//static inline Bitboard antidiagonal_attacks(Square from, Bitboard occupance) {
+//	const size_t sq = static_cast<size_t>(from);
+//	const uint64_t occ = (antidiagonal_mask_ex[sq] & occupance).bits * b_file >> 58;
+//	return antidiagonal_mask_ex[sq] & fill_up_attacks[sq & 7][occ];
+//}
+//static inline Bitboard rank_attacks(Square from, Bitboard occupance) {
+//	const size_t sq = static_cast<size_t>(from);
+//	const uint64_t occ = (rank_mask_ex[sq] & occupance).bits * b_file >> 58;
+//	return rank_mask_ex[sq] & fill_up_attacks[sq & 7][occ];
+//}
+//static inline Bitboard file_attacks(Square from, Bitboard occupance) {
+//	const uint64_t a_file = 0x0101010101010101;
+//	const uint64_t diag_c2h7 = 0x0080402010080400;
+//	const size_t sq = static_cast<size_t>(from);
+//	const uint64_t occ = (diag_c2h7 * a_file & (occupance.bits >> (sq & 7))) >> 58;
+//	return Bitboard(a_file_attacks[sq >> 3][occ].bits << (sq & 7));
+//}
+//static const Bitboard pawn_attack[2][64];
+//static const Bitboard knight_attack[64];
+//static const Bitboard king_attack[64];
+//static inline Bitboard pawn_attacks(Square from, Color color) {
+//	return pawn_attack[static_cast<size_t>(color)][static_cast<size_t>(from)];
+//}
+//static inline Bitboard knight_attacks(Square from) {
+//	return knight_attack[static_cast<size_t>(from)];
+//}
+//static inline Bitboard king_attacks(Square from) {
+//	return king_attack[static_cast<size_t>(from)];
+//}
+//static inline Bitboard rook_attacks(Square from, Bitboard occupance) {
+//	return file_attacks(from, occupance) | rank_attacks(from, occupance);
+//}
+//static inline Bitboard bishop_attacks(Square from, Bitboard occupance) {
+//	return file_attacks(from, occupance) | rank_attacks(from, occupance);
+//}
+//static inline Bitboard queen_attacks(Square from, Bitboard occupance) {
+//	return rook_attacks(from, occupance) | bishop_attacks(from, occupance);
+//}
