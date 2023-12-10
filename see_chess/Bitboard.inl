@@ -2,40 +2,36 @@
 #include <cassert>
 #include <bit>
 
-constexpr RankType to_underlying_type(Rank rank) {
-	return static_cast<RankType>(rank);
-}
-constexpr FileType to_underlying_type(File file) {
-	return static_cast<FileType>(file);
-}
-constexpr SquareType to_underlying_type(Square square) {
-	return static_cast<SquareType>(square);
-}
-
-constexpr Rank to_rank(Square square) {
-	return static_cast<Rank>(to_underlying_type(square) / 8);
-}
-constexpr File to_file(Square square) {
-	return static_cast<File>(to_underlying_type(square) & 7);
-}
-constexpr Rank to_square(Rank rank, File file) {
-	return static_cast<Rank>(to_underlying_type(rank) * 8 + to_underlying_type(file));
-}
-
 constexpr Bitboard Bitboard::empty() {
 	return Bitboard(0);
 }
 constexpr Bitboard Bitboard::filled() {
 	return Bitboard(UINT64_MAX);
 }
-constexpr Bitboard Bitboard::from_rank(Rank rank) {
-	return Bitboard((uint64_t)0xFF << (to_underlying_type(rank) * 8));
+constexpr Bitboard Bitboard::square(Square square) {
+	const uint64_t magic = 0x1;
+	return Bitboard(magic << to_underlying_type(square));
 }
-constexpr Bitboard Bitboard::from_file(File file) {
-	return Bitboard((uint64_t)0x0101010101010101 << to_underlying_type(file));
+constexpr Bitboard Bitboard::rank(Rank rank) {
+	const uint64_t magic = 0xFF;
+	return Bitboard(magic << (to_underlying_type(rank) * 8));
 }
-constexpr Bitboard Bitboard::from_square(Square square) {
-	return Bitboard((uint64_t)1 << to_underlying_type(square));
+constexpr Bitboard Bitboard::file(File file) {
+	const uint64_t magic = 0x0101010101010101;
+	return Bitboard(magic << to_underlying_type(file));
+}
+constexpr Bitboard Bitboard::diagonal(Diagonal diagonal) {
+	const uint64_t magic = 0x8040201008040201;
+	const int diag = 7 - to_underlying_type(diagonal);
+	return Bitboard(magic).generalized_shift(diag * 8);
+}
+constexpr Bitboard Bitboard::antidiagonal(Antidiagonal antidiagonal) {
+	const uint64_t magic = 0x0102040810204080;
+	const int antidiag = to_underlying_type(antidiagonal) - 7;
+	return Bitboard(magic).generalized_shift(antidiag * 8);
+}
+constexpr Bitboard Bitboard::operator~() const {
+	return Bitboard(~value);
 }
 constexpr Bitboard Bitboard::operator|(Bitboard other) const {
 	return Bitboard(value | other.value);
@@ -47,11 +43,11 @@ constexpr Bitboard Bitboard::operator^(Bitboard other) const {
 	return Bitboard(value ^ other.value);
 }
 constexpr Bitboard Bitboard::operator>>(int shift) const {
-	assert(shift > 0 && shift < 64);
+	assert(shift >= 0 && shift < 64);
 	return Bitboard(value >> shift);
 }
 constexpr Bitboard Bitboard::operator<<(int shift) const {
-	assert(shift > 0 && shift < 64);
+	assert(shift >= 0 && shift < 64);
 	return Bitboard(value << shift);
 }
 constexpr bool Bitboard::operator==(Bitboard other) const {
@@ -64,7 +60,7 @@ constexpr bool Bitboard::is_filled() const {
 	return *this == Bitboard::filled();
 }
 constexpr bool Bitboard::has_square(Square square) const {
-	return !(*this & Bitboard::from_square(square)).is_empty();
+	return !(*this & Bitboard::square(square)).is_empty();
 }
 constexpr int Bitboard::popcount() const {
 	return std::popcount(value);
@@ -73,11 +69,33 @@ constexpr Square Bitboard::bitscan() const {
 	assert(value);
 	return static_cast<Square>(std::countr_zero(value));
 }
+constexpr Bitboard Bitboard::generalized_shift(int shift) const {
+	assert(shift > -64 && shift < 64);
+	return Bitboard(shift >= 0 ? value << shift : value >> -shift);
+}
 constexpr Bitboard Bitboard::reset_bit() const {
 	return Bitboard(value & (value - (uint64_t)1));
 }
+constexpr Bitboard Bitboard::step(Direction direction) const {
+	const Bitboard bb = generalized_shift(to_raw_offset(direction));
+	switch (direction) {
+	case Direction::East:
+	case Direction::Northeast:
+	case Direction::Southwest:
+		return bb & ~Bitboard::file(File::A);
+	case Direction::West:
+	case Direction::Northwest:
+	case Direction::Southeast:
+		return bb & ~Bitboard::file(File::H);
+	case Direction::North:
+	case Direction::South:
+		return bb;
+	default:
+		assert(false);
+	}
+}
 constexpr Bitboard Bitboard::north_fill() const {
-	return Bitboard(from_file(File::A).value * value);
+	return Bitboard(Bitboard::file(File::A).value * value);
 }
 
 //static inline Bitboard diagonal_attacks(Square from, Bitboard occupance) {

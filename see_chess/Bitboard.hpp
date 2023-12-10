@@ -1,75 +1,47 @@
 #pragma once
-#include <cstdint>
-
-using RankType = uint8_t;
-// Vertical position of a chessboard square.
-enum class Rank : RankType {
-	R1,
-	R2,
-	R3,
-	R4,
-	R5,
-	R6,
-	R7,
-	R8
-};
-
-using FileType = uint8_t;
-// Horizontal position of a chessboard square.
-enum class File : FileType {
-	A,
-	B,
-	C,
-	D,
-	E,
-	F,
-	G,
-	H
-};
-
-using SquareType = uint8_t;
-// Chessboard square.
-enum class Square : SquareType {
-	A1, B1, C1, D1, E1, F1, G1, H1,
-	A2, B2, C2, D2, E2, F2, G2, H2,
-	A3, B3, C3, D3, E3, F3, G3, H3,
-	A4, B4, C4, D4, E4, F4, G4, H4,
-	A5, B5, C5, D5, E5, F5, G5, H5,
-	A6, B6, C6, D6, E6, F6, G6, H6,
-	A7, B7, C7, D7, E7, F7, G7, H7,
-	A8, B8, C8, D8, E8, F8, G8, H8
-};
-
-constexpr RankType to_underlying_type(Rank rank);
-constexpr FileType to_underlying_type(File file);
-constexpr SquareType to_underlying_type(Square square);
-
-constexpr Rank to_rank(Square square);
-constexpr File to_file(Square square);
-constexpr Rank to_square(Rank rank, File file);
+#include "Square.hpp"
 
 // An efficient representation of a chessboard occupance.
 class Bitboard {
 public:
+	constexpr Bitboard() {};
 	constexpr static Bitboard empty();
 	constexpr static Bitboard filled();
-	constexpr static Bitboard from_rank(Rank rank);
-	constexpr static Bitboard from_file(File file);
-	constexpr static Bitboard from_square(Square square);
+	constexpr static Bitboard square(Square square);
+	constexpr static Bitboard rank(Rank rank);
+	constexpr static Bitboard file(File file);
+	constexpr static Bitboard diagonal(Diagonal diagonal);
+	constexpr static Bitboard antidiagonal(Antidiagonal antidiagonal);
 	constexpr bool operator==(Bitboard other) const;
+	constexpr Bitboard operator~() const;
 	constexpr Bitboard operator|(Bitboard other) const;
 	constexpr Bitboard operator&(Bitboard other) const;
 	constexpr Bitboard operator^(Bitboard other) const;
 	constexpr Bitboard operator>>(int shift) const;
 	constexpr Bitboard operator<<(int shift) const;
+
+	// Checks whether the board is completely empty.
 	constexpr bool is_empty() const;
+	// Checks whether the board is completely occupied.
 	constexpr bool is_filled() const;
+	// Checks whether the square is occupied.
 	constexpr bool has_square(Square square) const;
+	// Counts the amount of occupied squares.
 	constexpr int popcount() const;
+	// Finds the square with the smallest value. 
+	// Board must be non-empty.
 	constexpr Square bitscan() const;
+	// Positive shift shifts to the LEFT (increasing), 
+	// negative shift shifts to the RIGHT (decreasing).
+	constexpr Bitboard generalized_shift(int shift) const;
+	// Removes the square with the smallest value.
+	// Does nothing if board is empty.
 	constexpr Bitboard reset_bit() const;
+	constexpr Bitboard step(Direction direction) const;
 	constexpr Bitboard north_fill() const;
 private:
 	constexpr explicit Bitboard(uint64_t value) : value(value) {}
-	uint64_t value;
+	uint64_t value = 0;
 };
+
+#include "Bitboard.inl"
