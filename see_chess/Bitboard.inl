@@ -9,23 +9,28 @@ constexpr Bitboard Bitboard::filled() {
 	return Bitboard(UINT64_MAX);
 }
 constexpr Bitboard Bitboard::square(Square square) {
+	// PERF: shift may be replaced by table lookup.
 	const uint64_t magic = 0x1;
 	return Bitboard(magic << to_underlying_type(square));
 }
 constexpr Bitboard Bitboard::rank(Rank rank) {
+	// PERF: shift may be replaced by table lookup.
 	const uint64_t magic = 0xFF;
 	return Bitboard(magic << (to_underlying_type(rank) * 8));
 }
 constexpr Bitboard Bitboard::file(File file) {
+	// PERF: shift may be replaced by table lookup.
 	const uint64_t magic = 0x0101010101010101;
 	return Bitboard(magic << to_underlying_type(file));
 }
 constexpr Bitboard Bitboard::diagonal(Diagonal diagonal) {
+	// PERF: shift may be replaced by table lookup.
 	const uint64_t magic = 0x8040201008040201;
 	const int diag = 7 - to_underlying_type(diagonal);
 	return Bitboard(magic).generalized_shift(diag * 8);
 }
 constexpr Bitboard Bitboard::antidiagonal(Antidiagonal antidiagonal) {
+	// PERF: shift may be replaced by table lookup.
 	const uint64_t magic = 0x0102040810204080;
 	const int antidiag = to_underlying_type(antidiagonal) - 7;
 	return Bitboard(magic).generalized_shift(antidiag * 8);

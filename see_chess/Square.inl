@@ -56,7 +56,7 @@ constexpr Antidiagonal to_antidiagonal(Square square) {
 	return static_cast<Antidiagonal>(to_underlying_type(to_rank(square)) + to_underlying_type(to_file(square)));
 }
 constexpr Square to_square(Rank rank, File file) {
-	return static_cast<Square>(to_underlying_type(rank) * 8 + to_underlying_type(file));
+	return static_cast<Square>((to_underlying_type(rank) << 3) + to_underlying_type(file));
 }
 
 //constexpr Rank move(Rank rank, int distance) {

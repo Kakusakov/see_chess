@@ -11,7 +11,7 @@ using SquareType = uint8_t;
 //         -9    -8    -7
 // southwest    south   southeast
 
-// A direction on the chessboard, see compass above.
+// A direction on the chessboard. See compass above for detail.
 enum class Direction : SquareType {
 	East,  // +1
 	West,  // -1
